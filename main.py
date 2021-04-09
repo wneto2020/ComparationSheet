@@ -32,6 +32,7 @@ def transfer_data():
 
     for res in sheet_request:
         if len(str(res['cpf'])) == 11:
+            res['cpf'] = str(res['cpf'])
             cpf_replace = f'{res["cpf"][0:3]}.{res["cpf"][3:6]}.{res["cpf"][6:9]}-{res["cpf"][9:]}'
             res['cpf'] = cpf_replace
 
@@ -47,12 +48,15 @@ def transfer_data():
 
 
         for res2 in sheet_import:
-            if len(str(res2['cpf'])) == 11:
+
+            if len(str(res2["cpf"])) == 11:
+                res2["cpf"] = str(res2["cpf"])
                 cpf_replace = f'{res2["cpf"][0:3]}.{res2["cpf"][3:6]}.{res2["cpf"][6:9]}-{res2["cpf"][9:]}'
                 res2['cpf'] = cpf_replace
+                print(res2["cpf"])
 
             elif len(str(res2['cpf'])) == 10:
-                res2['cpf'] = '0' +str(res['cpf'])
+                res2['cpf'] = '0' + str(res['cpf'])
                 cpf_replace = f'{res2["cpf"][0:3]}.{res2["cpf"][3:6]}.{res2["cpf"][6:9]}-{res2["cpf"][9:]}'
                 res2['cpf'] = cpf_replace
 
@@ -70,7 +74,7 @@ def transfer_data():
         i = 0
         for res in sheet_finally:
             if item['Email'] in res or item['cpf'] in res:
-                print(item['Email'],'Já existente')
+                print(item['Email'], 'Já existente')
             else:
                 i += 1
 
