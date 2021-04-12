@@ -1,11 +1,11 @@
 import gspread
 
 class AutomationSheet:
-    def __init__(self):
-        self.solicitation = self.request_sheet('Solicitacoes', 'dict')
-        self.importation = self.request_sheet('planilha importada', 'dict')
-        self.median_list = self.request_sheet('planilha intermed', 'list')
-        self.median_dict = self.request_sheet('planilha intermed', 'dict')
+    def __init__(self, importation, solicitation, median):
+        self.solicitation = self.request_sheet(solicitation, 'dict')
+        self.importation = self.request_sheet(importation, 'dict')
+        self.median_list = self.request_sheet(median, 'list')
+        self.median_dict = self.request_sheet(median, 'dict')
         self.list = []
         self.lenght = 2
 
@@ -73,18 +73,23 @@ class AutomationSheet:
             if i == len(self.median_list):
                 self.write('planilha intermed', [v for v in item.values()])
 
-    def update_situation(self):
+    def update_situation(self, send, median):
         for item in self.median_dict:
             if item['situacao'] == 'Enviado':
                 print("enviado")
 
             elif item['situacao'] != 'Enviado':
-                self.write('Planilha de envio', [v for v in item.values()])
-                self.update('planilha intermed', self.lenght)
+                self.write(send, [v for v in item.values()])
+                self.update(median, self.lenght)
 
             self.lenght += 1
 
 if __name__ == '__main__':
-    test = AutomationSheet()
+    planilha_import = input('Nome da planilha importada (sem extensão): ')
+    planilha_request = input('Nome da planilha de solicitação: ')
+    planilha_intermed = input('Nome da planilha intermediadora: ')
+    planilha_send = input('Planilha para enviar os dados: ')
+
+    test = AutomationSheet(planilha_import, planilha_request, planilha_intermed)
     test.start()
-    test.update_situation()
+    test.update_situation(planilha_send, planilha_intermed)
