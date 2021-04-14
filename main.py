@@ -1,84 +1,97 @@
 import gspread
 
-planilha = input("Digite o nome da planilha: ").lower()
-list_insert = []
 
-def sheet_request():
-    gc = gspread.service_account(filename='service_account.json')
-    sh = gc.open('Solicitacoes')
-    return sh.sheet1.get_all_records()
+class AutomationSheet:
+    def __init__(self, importation, solicitation, median):
+        self.solicitation = self.request_sheet(solicitation, 'dict')
+        self.importation = self.request_sheet(importation, 'dict')
+        self.median_list = self.request_sheet(median, 'list')
+        self.median_dict = self.request_sheet(median, 'dict')
+        self.list = []
+        self.median = median
+        self.lenght = 2
 
-def sheet_import(planilha):
-    gc = gspread.service_account(filename='service_account.json')
-    sh = gc.open(planilha)
-    return sh.sheet1.get_all_records()
+    @staticmethod
+    def request_sheet(sheet, condition=None):
+        gc = gspread.service_account('service_account.json')
+        sh = gc.open(sheet)
+        if condition == 'list':
+            return sh.sheet1.get_all_values()
+        elif condition == 'dict':
+            return sh.sheet1.get_all_records()
+        else:
+            return sh
 
-def sheet_finally():
-    gc = gspread.service_account(filename='service_account.json')
-    sh = gc.open('list_final')
-    return sh.sheet1.get_all_values()
+    def write(self, sheet, add: list):
+        write_sheet = self.request_sheet(sheet)
+        work = write_sheet.sheet1
+        work.append_row(add)
 
-def write_sheet(x: list):
-    gc = gspread.service_account(filename='service_account.json')
-    sh = gc.open('list_final')
-    work = sh.sheet1
-    work.append_row(x)
+    def update(self, sheet, x):
+        update_sheet = self.request_sheet(sheet)
+        update = update_sheet.sheet1
+        update.update(str(f'D{x}'), 'Enviado')
 
-sheet_request = sheet_request()
-sheet_import = sheet_import(planilha)
-sheet_finally = sheet_finally()
+    def write_comparison(self):
+        for person in self.solicitation:
+            for person_auth in self.importation:
+                if person['Nome Completo (Para Certificado)'] == person_auth['Nome'] or person['Endereço de e-mail'] == person_auth['E-mail']:
+                    self.list.append(person)
+        return self.list
 
-def transfer_data():
+    def start(self):
+        list_comparison = self.write_comparison()
+        for item in list_comparison:
+            i = 0
+            for res in self.median_list:
+                if (item['Nome Completo (Para Certificado)'] or item['Endereço de e-mail']) in res:
+                    continue
+                else:
+                    i += 1
+            if i == len(self.median_list):
+                self.write(self.median, [item['Nome Completo (Para Certificado)'], item['Endereço de e-mail'],
+                                         item['CPF - Somente números (Para Certificado)']])
 
-    for res in sheet_request:
-        if len(str(res['cpf'])) == 11:
-            res['cpf'] = str(res['cpf'])
-            cpf_replace = f'{res["cpf"][0:3]}.{res["cpf"][3:6]}.{res["cpf"][6:9]}-{res["cpf"][9:]}'
-            res['cpf'] = cpf_replace
+    def update_cpf(self, sheet):
+        i = 2
+        update_sheet = self.request_sheet(sheet)
+        update = update_sheet.sheet1
+        sh = update.get_all_records()
+        for item in sh:
+            if len(str(item['cpf'])) == 11:
+                cpf = str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
 
-        elif len(str(res['cpf'])) == 10:
-            res['cpf'] = '0'+str(res['cpf'])
-            cpf_replace = f'{res["cpf"][0:3]}.{res["cpf"][3:6]}.{res["cpf"][6:9]}-{res["cpf"][9:]}'
-            res['cpf'] = cpf_replace
+            if len(str(item['cpf'])) == 10:
+                cpf = "0" + str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
 
-        elif len(str(res['cpf'])) == 9:
-            res['cpf'] = '00'+str(res['cpf'])
-            cpf_replace = f'{res["cpf"][0:3]}.{res["cpf"][3:6]}.{res["cpf"][6:9]}-{res["cpf"][9:]}'
-            res['cpf'] = cpf_replace
+            if len(str(item['cpf'])) == 9:
+                cpf = "00" + str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
+            i += 1
 
+    def update_situation(self, send, median):
+        for item in self.median_dict:
+            if item['situacao'] == 'Enviado':
+                print("enviado")
 
-        for res2 in sheet_import:
+            elif item['situacao'] != 'Enviado':
+                self.write(send, [item['Nome'], item['Email'], item['cpf']])
+                self.update(median, self.lenght)
 
-            if len(str(res2["cpf"])) == 11:
-                res2["cpf"] = str(res2["cpf"])
-                cpf_replace = f'{res2["cpf"][0:3]}.{res2["cpf"][3:6]}.{res2["cpf"][6:9]}-{res2["cpf"][9:]}'
-                res2['cpf'] = cpf_replace
-                print(res2["cpf"])
+            self.lenght += 1
 
-            elif len(str(res2['cpf'])) == 10:
-                res2['cpf'] = '0' + str(res['cpf'])
-                cpf_replace = f'{res2["cpf"][0:3]}.{res2["cpf"][3:6]}.{res2["cpf"][6:9]}-{res2["cpf"][9:]}'
-                res2['cpf'] = cpf_replace
+if __name__ == '__main__':
+    planilha_import = input('Nome da planilha importada (sem extensão): ')
+    planilha_request = input('Nome da planilha de solicitação: ')
+    planilha_intermed = input('Nome da planilha intermediadora: ')
+    planilha_send = input('Planilha para enviar os dados: ')
 
-            elif len(str(res2['cpf'])) == 9:
-                res2['cpf'] = '00' + str(res['cpf'])
-                cpf_replace = f'{res2["cpf"][0:3]}.{res2["cpf"][3:6]}.{res2["cpf"][6:9]}-{res2["cpf"][9:]}'
-                res2['cpf'] = cpf_replace
-
-            if res['Email'] == res2['Email'] or res['cpf'] == res2['cpf']:
-                list_insert.append(res)
-
-    lenght = len(sheet_finally)
-
-    for item in list_insert:
-        i = 0
-        for res in sheet_finally:
-            if item['Email'] in res or item['cpf'] in res:
-                print(item['Email'], 'Já existente')
-            else:
-                i += 1
-
-        if i == lenght:
-            write_sheet([item['Nome'], item['Email'], item['cpf'], item['telefone']])
-
-transfer_data()
+    test = AutomationSheet(planilha_import, planilha_request, planilha_intermed)
+    test.start()
+    test.update_situation(planilha_send, planilha_intermed)
+    test.update_cpf(planilha_send)
