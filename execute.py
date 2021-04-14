@@ -34,7 +34,7 @@ class AutomationSheet:
     def write_comparison(self):
         for person in self.solicitation:
             for person_auth in self.importation:
-                if person['Nome Completo (Para Certificado)'] == person_auth['Nome'] or person['Endereço de e-mail'] == person_auth['E-mail']:
+                if person['Nome Completo (Para Certificado)'] == person_auth['Nome'] or person['Endereço de e-mail'] == person_auth['Email']:
                     self.list.append(person)
         return self.list
 
@@ -50,6 +50,28 @@ class AutomationSheet:
             if i == len(self.median_list):
                 self.write(self.median, [item['Nome Completo (Para Certificado)'], item['Endereço de e-mail'],
                                          item['CPF no Formato XXX.XXX.XXX-XX (Para Certificado)']])
+
+    def update_cpf(self, sheet):
+        i = 2
+        update_sheet = self.request_sheet(sheet)
+        update = update_sheet.sheet1
+        sh = update.get_all_records()
+        for item in sh:
+            if len(str(item['cpf'])) == 11:
+                cpf = str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
+
+            if len(str(item['cpf'])) == 10:
+                cpf = "0" + str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
+
+            if len(str(item['cpf'])) == 9:
+                cpf = "00" + str(item['cpf'])
+                replace = f'{cpf[0:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+                update.update(str(f'C{i}'), replace)
+            i += 1
 
     def update_situation(self, send, median):
         for item in self.median_dict:
@@ -71,3 +93,4 @@ if __name__ == '__main__':
     test = AutomationSheet(planilha_import, planilha_request, planilha_intermed)
     test.start()
     test.update_situation(planilha_send, planilha_intermed)
+    test.update_cpf(planilha_send)
