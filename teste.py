@@ -12,6 +12,9 @@ class Sup:
 
     @staticmethod
     def request_sheet(spreadsheet, sheet, method=None):
+         """The function requests a spreadsheet,
+            returning the contents of your chosen sheet and the return method
+        """
         gc = gspread.service_account('service_account.json')
         sh = gc.open(spreadsheet)
         work = sh.worksheet(sheet)
@@ -24,7 +27,6 @@ class Sup:
             return work
 
     def comparison(self):
-
         """Function of comparison spreadsheets importation and solicitation
         """
         for person_solicit in self.solicitation:
@@ -34,17 +36,21 @@ class Sup:
         return self.list
 
     def write(self, spreadsheet, sheet, add: list):
-
+         """The function write in a sheet
+           not return
+        """
         writer = self.request_sheet(spreadsheet, sheet)
         writer.append_row(add)
 
     def update(self, spreadsheet, sheet, cont):
         """Update cell"""
+        
         update_cell = self.request_sheet(spreadsheet, sheet)
         update_cell.update(f'D{cont}', 'Enviado')
 
     def update_send(self):
         """Function update the spreadsheet on key situation and send data from other spreadsheet"""
+        
         i = 2
         for item in self.median_dict:
             if item['situacao'] == 'Enviado':
