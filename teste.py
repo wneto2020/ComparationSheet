@@ -82,8 +82,8 @@ class Sup:
 
 
 if __name__ == '__main__':
-    # importada = input('import: ')
-    # solicitada = input('solicit: ')
+    # importation = input('import: ')
+    # solicitation = input('solicit: ')
     sup = Sup('importada', 'solicitacao')
     sup.run()
     sup.update_send()
